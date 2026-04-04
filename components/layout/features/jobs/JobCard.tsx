@@ -35,15 +35,22 @@ export default function JobCard({ job }: JobCardProps) {
           <p className="text-xs text-gray-400 mt-1">{job.postedAt}</p>
         </div>
       </div>
+
+      {/* --- NEW: Description INSIDE the main div --- */}
+      {job.description && (
+        <p className="mt-4 text-sm text-gray-500 line-clamp-2 italic border-t pt-2 border-gray-50">
+          {job.description}
+        </p>
+      )}
       
       <div className="mt-4 flex gap-2">
         <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
           Apply Now
         </button>
-        <button className="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-          <span className="text-gray-400">Save</span>
+        <button className="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-gray-400 text-sm">
+          Save
         </button>
       </div>
-    </div>
+    </div> 
   );
 }

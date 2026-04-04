@@ -29,4 +29,6 @@ export const MOCK_JOBS: Job[] = [
   postedAt: "2 hours ago",
   description: "Looking for an expert to build and deploy machine learning models for CV screening automation."
 },
+
 ];
+
