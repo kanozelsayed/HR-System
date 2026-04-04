@@ -6,4 +6,5 @@ export interface Job {
   type: string;
   salary: string;
   postedAt: string;
+  description?: string; // Adding '?' makes it optional not (required)
 }
