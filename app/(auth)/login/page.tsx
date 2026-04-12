@@ -93,12 +93,12 @@ function LoginContent() {
         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
-        Back to Home
+        Back to Home 
       </button>
 
       <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all text-gray-900">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-2 tracking-tight">Welcome Back</h2>
-        <p className="text-gray-500 text-center mb-8 text-sm font-medium">Sign in to manage your hiring process</p>
+        <p className="text-gray-500 text-center mb-8 text-sm font-medium">Sign in to manage your hiring process .</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
