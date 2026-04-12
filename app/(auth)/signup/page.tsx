@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, Suspense } from "react"; // ضفنا Suspense هنا
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -24,7 +24,8 @@ const STRENGTH_CONFIG: Record<number, { label: string; color: string; width: str
   4: { label: "Strong", color: "bg-green-500", width: "w-full" },
 };
 
-export default function SignUpPage() {
+// 1. فصلنا الكود في Component داخلية عشان Suspense يشتغل صح
+function SignUpContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -86,16 +87,12 @@ export default function SignUpPage() {
     setIsValid(isEmailValid && isPassValid && isConfirmValid && isRoleValid);
   }, [formData, role]);
 
-  // ── التعديل هنا لضمان مسح الـ Other Field ──
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => {
       const newState = { ...prev, [name]: value };
-      
-      // لو غيرت الـ Industry لأي حاجة غير Other، بنصفر الحقل اليدوي فوراً
       if (name === "industry" && value !== "other") {
         newState.customIndustry = "";
       }
-      
       return newState;
     });
 
@@ -122,9 +119,8 @@ export default function SignUpPage() {
   const score = getStrengthScore(formData.password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans text-gray-900">
       
-      {/* Back Button */}
       <button 
         onClick={() => router.push("/")}
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-all font-medium text-sm group"
@@ -136,9 +132,8 @@ export default function SignUpPage() {
       </button>
 
       <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6 tracking-tight">Create Account</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6 tracking-tight font-sans">Create Account</h2>
 
-        {/* ROLE SWITCHER */}
         <div className="flex p-1 bg-gray-100 rounded-xl mb-8">
           <button
             type="button"
@@ -161,7 +156,6 @@ export default function SignUpPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
-          
           {role === "seeker" ? (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
               <input
@@ -285,5 +279,14 @@ export default function SignUpPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// 2. ده الـ Export الأساسي لصفحة الـ Signup (مغلف بـ Suspense)
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic animate-pulse text-lg">Loading...</div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }

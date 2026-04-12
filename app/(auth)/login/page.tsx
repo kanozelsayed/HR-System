@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, Suspense } from "react"; // ضفنا Suspense هنا
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+// 1. فصلنا الكود الأساسي في Component منفصلة عشان نغلفها
+function LoginContent() {
   const router = useRouter();
 
   // ─── STATE MANAGEMENT ──────────────────────────────────────────────────────
@@ -66,15 +67,12 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
 
-    // تمثيلية التواصل مع السيرفر
     setTimeout(() => {
       setIsSubmitting(false);
       
-      // تجربة الدخول ببيانات افتراضية
       if (email === "admin@smarthire.ai" && password === "password123") {
         showToast("Login successful! Welcome back.", "success");
         
-        // الانتقال للداشبورد بعد ثانية واحدة
         setTimeout(() => {
           router.push("/dashboard");
         }, 1000);
@@ -87,7 +85,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans">
       
-      {/* ── BACK TO HOME BUTTON ── */}
       <button 
         onClick={() => router.push("/")}
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-all font-medium text-sm group"
@@ -103,7 +100,6 @@ export default function LoginPage() {
         <p className="text-gray-500 text-center mb-8 text-sm font-medium">Sign in to manage your hiring process</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input
@@ -119,7 +115,6 @@ export default function LoginPage() {
             {touched.email && errors.email && <p className="text-red-500 text-[10px] mt-1 ml-2 font-medium">{errors.email}</p>}
           </div>
 
-          {/* Password Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
@@ -144,7 +139,6 @@ export default function LoginPage() {
             {touched.password && errors.password && <p className="text-red-500 text-[10px] mt-1 ml-2 font-medium">{errors.password}</p>}
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
             disabled={!isValid || isSubmitting}
@@ -154,15 +148,7 @@ export default function LoginPage() {
                 : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
             }`}
           >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Processing...
-              </span>
-            ) : "Login"}
+            {isSubmitting ? "Processing..." : "Login"}
           </button>
         </form>
 
@@ -172,7 +158,6 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Toast UI */}
       {toast && (
         <div className={`fixed top-10 right-10 z-[100] flex items-center px-6 py-3 rounded-2xl shadow-2xl border text-white transition-all duration-500 animate-in fade-in slide-in-from-top-10 ${
           toast.type === "success" ? "bg-emerald-500 border-emerald-400" : "bg-red-500 border-red-400"
@@ -182,5 +167,14 @@ export default function LoginPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// 2. الـ Export الأساسي اللي Next.js بينادي عليه
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic animate-pulse text-lg">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
