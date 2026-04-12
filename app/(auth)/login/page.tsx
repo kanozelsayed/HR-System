@@ -89,7 +89,7 @@ function LoginContent() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input type="email" placeholder="name@company.com" onBlur={() => handleBlur("email")} className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${touched.email && errors.email ? "border-red-500 bg-red-50/30" : "border-gray-200 focus:border-blue-500"}`} value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" placeholder="Please enter your email" onBlur={() => handleBlur("email")} className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${touched.email && errors.email ? "border-red-500 bg-red-50/30" : "border-gray-200 focus:border-blue-500"}`} value={email} onChange={(e) => setEmail(e.target.value)} />
             {touched.email && errors.email && <p className="text-red-500 text-[10px] mt-1 ml-2">{errors.email}</p>}
           </div>
           <div>
@@ -123,3 +123,11 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+
+
+
+
+
+
+
