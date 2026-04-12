@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, FormEvent, Suspense } from "react"; // ضفنا Suspense هنا
+import { useState, useEffect, FormEvent, Suspense } from "react"; 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// 1. فصلنا الكود الأساسي في Component منفصلة عشان نغلفها
+// 1. LoginContent Component
 function LoginContent() {
   const router = useRouter();
 
@@ -85,6 +85,7 @@ function LoginContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans">
       
+      {/* Back to Home */}
       <button 
         onClick={() => router.push("/")}
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-all font-medium text-sm group"
@@ -95,7 +96,7 @@ function LoginContent() {
         Back to Home
       </button>
 
-      <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all">
+      <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all text-gray-900">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-2 tracking-tight">Welcome Back</h2>
         <p className="text-gray-500 text-center mb-8 text-sm font-medium">Sign in to manage your hiring process</p>
 
@@ -154,7 +155,8 @@ function LoginContent() {
 
         <p className="text-center mt-8 text-sm text-gray-500">
           Don&apos;t have an account?{" "}
-          <Link href="/signup/role" className="text-blue-600 font-bold hover:underline transition-all underline-offset-4">Sign up</Link>
+          {/*/signup */}
+          <Link href="/signup" className="text-blue-600 font-bold hover:underline transition-all underline-offset-4">Sign up</Link>
         </p>
       </div>
 
@@ -170,7 +172,7 @@ function LoginContent() {
   );
 }
 
-// 2. الـ Export الأساسي اللي Next.js بينادي عليه
+// 2. Main Export with Suspense
 export default function LoginPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic animate-pulse text-lg">Loading...</div>}>
