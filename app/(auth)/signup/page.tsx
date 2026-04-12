@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// ─── HELPERS & CONFIGURATION ────────────────────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Calculates password strength score (0-4)
+ */
 const getStrengthScore = (val: string) => {
   if (!val) return 0;
   let s = 0;
@@ -24,11 +27,15 @@ const STRENGTH_CONFIG: Record<number, { label: string; color: string; width: str
   4: { label: "Strong", color: "bg-green-500", width: "w-full" },
 };
 
-export default function SignUpPage() {
+// ─── MAIN CONTENT COMPONENT ──────────────────────────────────────────────────
+function SignUpContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // State for user role (seeker/partner) derived from URL
   const [role, setRole] = useState(searchParams.get("role") || "seeker");
+
+  // Form data state management
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -47,17 +54,22 @@ export default function SignUpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // Helper to trigger toast notifications
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  /**
+   * Field-level validation logic
+   */
   const validateField = (name: string, value: string) => {
     let error = "";
     if (name === "email" && !EMAIL_RE.test(value)) error = "Invalid email format";
     if (name === "password" && value.length < 8) error = "Min 8 characters required";
     if (name === "confirmPassword" && value !== formData.password) error = "Passwords don't match";
     
+    // Role-specific validation
     if (role === "seeker") {
       if ((name === "firstname" || name === "lastname") && !value.trim()) error = "Required";
     } else {
@@ -68,6 +80,9 @@ export default function SignUpPage() {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
+  /**
+   * Effect to handle overall form validity (enables/disables submit button)
+   */
   useEffect(() => {
     const isEmailValid = EMAIL_RE.test(formData.email);
     const isPassValid = formData.password.length >= 8;
@@ -86,27 +101,33 @@ export default function SignUpPage() {
     setIsValid(isEmailValid && isPassValid && isConfirmValid && isRoleValid);
   }, [formData, role]);
 
-  // ── التعديل هنا لضمان مسح الـ Other Field ──
+  /**
+   * Handles input changes and clears conditional fields
+   */
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => {
       const newState = { ...prev, [name]: value };
-      
-      // لو غيرت الـ Industry لأي حاجة غير Other، بنصفر الحقل اليدوي فوراً
       if (name === "industry" && value !== "other") {
         newState.customIndustry = "";
       }
-      
       return newState;
     });
 
     if (touched[name]) validateField(name, value);
   };
 
+  /**
+   * Handles blur events to trigger validation styling
+   */
   const handleBlur = (name: string) => {
     setTouched((prev) => ({ ...prev, [name]: true }));
     validateField(name, (formData as any)[name]);
   };
 
+  /**
+   * Simulated signup submission
+   * English Comments: Capturing name and passing it to dashboard for personalization
+   */
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
@@ -115,14 +136,21 @@ export default function SignUpPage() {
     setTimeout(() => {
       setIsSubmitting(false);
       showToast("Account created successfully!", "success");
-      setTimeout(() => router.push("/dashboard"), 1500);
+
+      // Logic to pass user's name to dashboard
+      const userName = role === "partner" ? formData.companyName : formData.firstname;
+
+      setTimeout(() => {
+        // Navigating with name parameter
+        router.push(`/dashboard?name=${userName}`);
+      }, 1500);
     }, 2000);
   };
 
   const score = getStrengthScore(formData.password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans text-gray-900">
       
       {/* Back Button */}
       <button 
@@ -138,24 +166,30 @@ export default function SignUpPage() {
       <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-6 tracking-tight">Create Account</h2>
 
-        {/* ROLE SWITCHER */}
-        <div className="flex p-1 bg-gray-100 rounded-xl mb-8">
+        {/* ROLE SWITCHER WITH ICONS */}
+        <div className="flex p-1 bg-gray-100 rounded-2xl mb-8">
           <button
             type="button"
             onClick={() => setRole("seeker")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
               role === "seeker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}
           >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
             Seeker
           </button>
           <button
             type="button"
             onClick={() => setRole("partner")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
               role === "partner" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}
           >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
             Partner
           </button>
         </div>
@@ -272,7 +306,7 @@ export default function SignUpPage() {
         </form>
 
         <p className="text-center mt-6 text-sm text-gray-500">
-          Already have an account? <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all">Sign In</Link>
+          Already have an account? <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all underline-offset-4">Sign In</Link>
         </p>
       </div>
 
@@ -285,5 +319,14 @@ export default function SignUpPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── FINAL EXPORT WRAPPED IN SUSPENSE ────────────────────────────────────────
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic animate-pulse text-lg">Loading Signup...</div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }
