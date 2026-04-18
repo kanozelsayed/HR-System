@@ -3,6 +3,8 @@
 import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+// 1. Import the custom hook to access the Global Vault
+import { useAuth } from "@/app/context/AuthContext";
 
 // ─── HELPERS & CONFIGURATION ────────────────────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -31,11 +33,12 @@ const STRENGTH_CONFIG: Record<number, { label: string; color: string; width: str
 function SignUpContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
+  // 2. Extract the 'login' function from our Context
+  const { login } = useAuth();
 
-  // State for user role (seeker/partner) derived from URL
   const [role, setRole] = useState(searchParams.get("role") || "seeker");
 
-  // Form data state management
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -54,22 +57,17 @@ function SignUpContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Helper to trigger toast notifications
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  /**
-   * Field-level validation logic
-   */
   const validateField = (name: string, value: string) => {
     let error = "";
     if (name === "email" && !EMAIL_RE.test(value)) error = "Invalid email format";
     if (name === "password" && value.length < 8) error = "Min 8 characters required";
     if (name === "confirmPassword" && value !== formData.password) error = "Passwords don't match";
     
-    // Role-specific validation
     if (role === "seeker") {
       if ((name === "firstname" || name === "lastname") && !value.trim()) error = "Required";
     } else {
@@ -80,9 +78,6 @@ function SignUpContent() {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  /**
-   * Effect to handle overall form validity (enables/disables submit button)
-   */
   useEffect(() => {
     const isEmailValid = EMAIL_RE.test(formData.email);
     const isPassValid = formData.password.length >= 8;
@@ -101,9 +96,6 @@ function SignUpContent() {
     setIsValid(isEmailValid && isPassValid && isConfirmValid && isRoleValid);
   }, [formData, role]);
 
-  /**
-   * Handles input changes and clears conditional fields
-   */
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => {
       const newState = { ...prev, [name]: value };
@@ -116,9 +108,6 @@ function SignUpContent() {
     if (touched[name]) validateField(name, value);
   };
 
-  /**
-   * Handles blur events to trigger validation styling
-   */
   const handleBlur = (name: string) => {
     setTouched((prev) => ({ ...prev, [name]: true }));
     validateField(name, (formData as any)[name]);
@@ -126,7 +115,7 @@ function SignUpContent() {
 
   /**
    * Simulated signup submission
-   * English Comments: Capturing name and passing it to dashboard for personalization
+   * English Comments: Using the 'login' function from AuthContext to save session data
    */
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
@@ -137,12 +126,19 @@ function SignUpContent() {
       setIsSubmitting(false);
       showToast("Account created successfully!", "success");
 
-      // Logic to pass user's name to dashboard
+      // Determine the display name based on role
       const userName = role === "partner" ? formData.companyName : formData.firstname;
 
+      // English Comment: Saving user data to Global State (Context API)
+      login({
+        name: userName,
+        email: formData.email,
+        role: role
+      });
+
       setTimeout(() => {
-        // Navigating with name parameter
-        router.push(`/dashboard?name=${userName}`);
+        // English Comment: Clean navigation to dashboard without query strings
+        router.push("/dashboard");
       }, 1500);
     }, 2000);
   };
@@ -172,7 +168,7 @@ function SignUpContent() {
             type="button"
             onClick={() => setRole("seeker")}
             className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
-              role === "seeker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              role === "seeker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
             }`}
           >
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -184,7 +180,7 @@ function SignUpContent() {
             type="button"
             onClick={() => setRole("partner")}
             className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
-              role === "partner" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              role === "partner" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
             }`}
           >
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -195,7 +191,6 @@ function SignUpContent() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
-          
           {role === "seeker" ? (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
               <input
@@ -222,7 +217,6 @@ function SignUpContent() {
                 onChange={(e) => handleChange("companyName", e.target.value)}
                 onBlur={() => handleBlur("companyName")}
               />
-              
               <select
                 className={`w-full px-4 py-2 border rounded-xl outline-none bg-white transition-all ${
                   touched.industry && errors.industry ? "border-red-500" : "border-gray-200 focus:border-blue-500"
@@ -238,12 +232,11 @@ function SignUpContent() {
                 <option value="education">Education</option>
                 <option value="other">Other</option>
               </select>
-
               {formData.industry === "other" && (
                 <div className="animate-in slide-in-from-top-2 duration-300">
                   <input
                     placeholder="Please specify your industry"
-                    className={`w-full px-4 py-2 border border-blue-200 rounded-xl outline-none bg-blue-50/30 focus:border-blue-500 transition-all text-sm`}
+                    className="w-full px-4 py-2 border border-blue-200 rounded-xl outline-none bg-blue-50/30 focus:border-blue-500 transition-all text-sm"
                     value={formData.customIndustry}
                     onChange={(e) => handleChange("customIndustry", e.target.value)}
                     onBlur={() => handleBlur("customIndustry")}
@@ -322,7 +315,6 @@ function SignUpContent() {
   );
 }
 
-// ─── FINAL EXPORT WRAPPED IN SUSPENSE ────────────────────────────────────────
 export default function SignUpPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic animate-pulse text-lg">Loading Signup...</div>}>

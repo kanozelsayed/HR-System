@@ -1,23 +1,88 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/app/context/AuthContext";
+
 export default function Sidebar() {
-  const menuItems = ["Job Feed", "My Applications", "Messages", "Profile", "Settings"];
+  const router = useRouter();
+  const pathname = usePathname();
+  const { logout } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // ✅ ربطنا كل item بـ href عشان ينقل للصفحة الصح
+  const menuItems = [
+    { name: "Job Feed", icon: "💼", href: "/jobs" },
+    { name: "Your Activity", icon: "📊", href: "/dashboard" },
+    { name: "My Applications", icon: "📝", href: "#" },
+    { name: "Messages", icon: "💬", href: "#" },
+    { name: "Settings", icon: "⚙️", href: "#" },
+  ];
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
-    /* hidden md:block To hide sidebar im mobile*/
-    <aside className="hidden md:block w-64 border-r bg-white h-[calc(100vh-64px)] sticky top-16 left-0 p-4">
-      <ul className="space-y-1">
+    <aside 
+      className={`h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300
+        ${isCollapsed ? "w-20" : "w-64"}`}
+    >
+      {/* --- Header Section --- */}
+      <div className="h-16 flex items-center px-4 border-b border-gray-100 gap-3">
+        {/* Hamburger Icon */}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors"
+        >
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        {/* Brand Name */}
+        {!isCollapsed && (
+          <span className="text-lg font-semibold text-gray-800 tracking-tight">
+            SmartHire AI
+          </span>
+        )}
+      </div>
+
+      {/* --- Navigation Links --- */}
+      <nav className="flex-1 py-6 px-3 space-y-1">
         {menuItems.map((item) => (
-          <li 
-            key={item} 
-            className={`p-3 rounded-lg cursor-pointer text-sm font-medium transition-all 
-              ${item === "Job Feed" 
-                ? "bg-blue-50 text-blue-700 shadow-sm" 
-                : "text-gray-600 hover:bg-gray-50 hover:pl-4" // Hover Effect
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`flex items-center gap-3 p-3 rounded-xl transition-all
+              ${pathname === item.href
+                ? "bg-blue-50 text-blue-700"  // ✅ الصفحة الحالية تتلون
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
           >
-            {item}
-          </li>
+            <span className="text-lg opacity-80">{item.icon}</span>
+            {!isCollapsed && (
+              <span className="text-sm font-medium">{item.name}</span>
+            )}
+          </Link>
         ))}
-      </ul>
+      </nav>
+
+      {/* --- Logout Section --- */}
+      <div className="p-4 border-t border-gray-100">
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all
+            ${isCollapsed ? "justify-center" : ""}`}
+        >
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          {!isCollapsed && <span className="text-sm font-semibold">Logout</span>}
+        </button>
+      </div>
     </aside>
   );
 }

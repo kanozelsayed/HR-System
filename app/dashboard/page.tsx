@@ -1,17 +1,19 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+// 1. Import the custom hook to access the "Vault"
+import { useAuth } from "@/app/context/AuthContext";
 
 /**
  * Main Content of the Dashboard
- * This component extracts the 'name' from URL parameters to personalize the UI
+ * English Comment: Using Global State (Context API) to retrieve user info instead of URL parameters.
  */
 function DashboardContent() {
-  const searchParams = useSearchParams();
+  // 2. Extract the user object from the AuthContext
+  const { user } = useAuth();
   
-  // Get the name from URL (?name=...) or default to 'User'
-  const userName = searchParams.get("name") || "User";
+  // 3. Logic: If user exists in Context, use their name. Otherwise, fallback to "Guest"
+  const userName = user ? user.name : "Guest";
   
   // Extract the first letter for the profile avatar
   const userInitial = userName.charAt(0).toUpperCase();
@@ -20,16 +22,16 @@ function DashboardContent() {
     <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-900">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header with Dynamic Profile Avatar */}
+        {/* Header with Dynamic Profile Avatar from Context */}
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">HR Dashboard</h1>
-            <p className="text-sm text-gray-500">Welcome back, {userName}!</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">HR Dashboard</h1>
+            <p className="text-sm text-gray-500">Welcome back, <span className="text-blue-600 font-bold">{userName}</span>!</p>
           </div>
           
           <div className="flex items-center gap-4">
-             {/* Dynamic Circle with User Initial */}
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-200 ring-4 ring-white transition-transform hover:scale-105">
+             {/* Dynamic Circle showing the initial of the logged-in user */}
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-200 ring-4 ring-white transition-transform hover:scale-105 cursor-pointer">
               {userInitial}
             </div>
           </div>
@@ -38,14 +40,14 @@ function DashboardContent() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {["Active Jobs", "New Candidates", "Interviews"].map((stat) => (
-            <div key={stat} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div key={stat} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
               <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">{stat}</p>
               <p className="text-3xl font-black text-blue-600">0</p>
             </div>
           ))}
         </div>
 
-        {/* Placeholder Content */}
+        {/* Placeholder Content personalized with Context data */}
         <div className="bg-white p-20 rounded-[2rem] border-2 border-dashed border-gray-200 text-center">
           <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-blue-500">
@@ -54,6 +56,7 @@ function DashboardContent() {
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">Ready to start hiring, {userName}?</h3>
           <p className="text-gray-400 max-w-xs mx-auto text-sm">
+            {user ? `Logged in as ${user.email}. ` : ""}
             Your workspace is ready. Once you post your first job, the data will populate here.
           </p>
         </div>
@@ -62,7 +65,7 @@ function DashboardContent() {
   );
 }
 
-// Wrapping with Suspense to prevent Prerendering errors on Vercel
+// English Comment: Keeping Suspense for Vercel deployment stability
 export default function FakeDashboard() {
   return (
     <Suspense fallback={
