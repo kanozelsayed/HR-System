@@ -130,10 +130,12 @@ function SignUpContent() {
       const userName = role === "partner" ? formData.companyName : formData.firstname;
 
       // English Comment: Saving user data to Global State (Context API)
+      // Fixed: Included empty token to match User type requirement
       login({
         name: userName,
         email: formData.email,
-        role: role
+        role: role,
+        token: "" 
       });
 
       setTimeout(() => {
