@@ -55,21 +55,24 @@ function LoginContent() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanPassword = password.trim();
     if (!isValid) return;
     setIsSubmitting(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    // ✅ Using the environment variable URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
     try {
-      const response = await axios.post("http://127.0.0.1:8000/company/login", {
+      const response = await axios.post(`${apiUrl}/company/login`, {
         email: cleanEmail,
         password: cleanPassword,
       });
 
-      // ✅ بناخد التوكن والـ user من الباك
       const { access_token, user } = response.data;
 
-      // ✅ بنحفظ البيانات الحقيقية
+      // ✅ Saving standard data to AuthContext
       login({
         name: user.name,
         email: user.email,
@@ -77,10 +80,13 @@ function LoginContent() {
         token: access_token,
       });
 
-      showToast("Login successful! Welcome back", "success");
+      showToast("Login successful! Redirecting...", "success");
+      
+      // Navigate to Jobs Feed
       setTimeout(() => router.push("/jobs"), 1000);
 
     } catch (error: any) {
+      console.error("Login Error Details:", error.response?.data);
       const errorMsg = error.response?.data?.detail || "Invalid email or password";
       showToast(errorMsg, "error");
     } finally {
@@ -109,7 +115,8 @@ function LoginContent() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input
-              type="email" placeholder="Please enter your email"
+              type="email" 
+              placeholder="e.g. kenzy3@test.com"
               onBlur={() => handleBlur("email")}
               onChange={(e) => { setEmail(e.target.value); if (touched.email) validateField("email", e.target.value); }}
               className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
@@ -124,7 +131,8 @@ function LoginContent() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"} placeholder="••••••••"
+                type={showPassword ? "text" : "password"} 
+                placeholder="••••••••"
                 onBlur={() => handleBlur("password")}
                 onChange={(e) => { setPassword(e.target.value); if (touched.password) validateField("password", e.target.value); }}
                 className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
@@ -133,7 +141,7 @@ function LoginContent() {
                 value={password}
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold uppercase">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[10px] font-bold uppercase">
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
@@ -141,10 +149,10 @@ function LoginContent() {
           </div>
 
           <button type="submit" disabled={!isValid || isSubmitting}
-            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all ${
-              isValid && !isSubmitting ? "bg-blue-600 text-white shadow-lg" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all shadow-sm ${
+              isValid && !isSubmitting ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}>
-            {isSubmitting ? "Processing..." : "Login"}
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -168,7 +176,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium">Loading Login...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-blue-600 font-medium italic">Loading Login...</div>}>
       <LoginContent />
     </Suspense>
   );
