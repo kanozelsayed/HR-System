@@ -3,15 +3,10 @@
 import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-// 1. Import the custom hook to access the Global Vault
 import { useAuth } from "@/app/context/AuthContext";
 
-// ─── HELPERS & CONFIGURATION ────────────────────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Calculates password strength score (0-4)
- */
 const getStrengthScore = (val: string) => {
   if (!val) return 0;
   let s = 0;
@@ -29,27 +24,16 @@ const STRENGTH_CONFIG: Record<number, { label: string; color: string; width: str
   4: { label: "Strong", color: "bg-green-500", width: "w-full" },
 };
 
-// ─── MAIN CONTENT COMPONENT ──────────────────────────────────────────────────
 function SignUpContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
-  // 2. Extract the 'login' function from our Context
   const { login } = useAuth();
 
   const [role, setRole] = useState(searchParams.get("role") || "seeker");
-
   const [formData, setFormData] = useState({
-    firstname: "",
-    lastname: "",
-    companyName: "",
-    industry: "",
-    customIndustry: "", 
-    email: "",
-    password: "",
-    confirmPassword: "",
+    firstname: "", lastname: "", companyName: "", industry: "",
+    customIndustry: "", email: "", password: "", confirmPassword: "",
   });
-
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -67,7 +51,6 @@ function SignUpContent() {
     if (name === "email" && !EMAIL_RE.test(value)) error = "Invalid email format";
     if (name === "password" && value.length < 8) error = "Min 8 characters required";
     if (name === "confirmPassword" && value !== formData.password) error = "Passwords don't match";
-    
     if (role === "seeker") {
       if ((name === "firstname" || name === "lastname") && !value.trim()) error = "Required";
     } else {
@@ -82,29 +65,22 @@ function SignUpContent() {
     const isEmailValid = EMAIL_RE.test(formData.email);
     const isPassValid = formData.password.length >= 8;
     const isConfirmValid = formData.confirmPassword === formData.password && formData.confirmPassword !== "";
-
     let isRoleValid = false;
     if (role === "partner") {
-      const isIndustryValid = formData.industry === "other" 
-        ? formData.customIndustry.trim() !== "" 
-        : formData.industry !== "";
+      const isIndustryValid = formData.industry === "other" ? formData.customIndustry.trim() !== "" : formData.industry !== "";
       isRoleValid = formData.companyName.trim() !== "" && isIndustryValid;
     } else {
       isRoleValid = formData.firstname.trim() !== "" && formData.lastname.trim() !== "";
     }
-
     setIsValid(isEmailValid && isPassValid && isConfirmValid && isRoleValid);
   }, [formData, role]);
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => {
       const newState = { ...prev, [name]: value };
-      if (name === "industry" && value !== "other") {
-        newState.customIndustry = "";
-      }
+      if (name === "industry" && value !== "other") newState.customIndustry = "";
       return newState;
     });
-
     if (touched[name]) validateField(name, value);
   };
 
@@ -113,34 +89,28 @@ function SignUpContent() {
     validateField(name, (formData as any)[name]);
   };
 
-  /**
-   * Simulated signup submission
-   * English Comments: Using the 'login' function from AuthContext to save session data
-   */
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setIsSubmitting(true);
-    
+
     setTimeout(() => {
       setIsSubmitting(false);
       showToast("Account created successfully!", "success");
 
-      // Determine the display name based on role
       const userName = role === "partner" ? formData.companyName : formData.firstname;
 
-      // English Comment: Saving user data to Global State (Context API)
-      // Fixed: Included empty token to match User type requirement
+      // ✅ partner = company, seeker = seeker
       login({
         name: userName,
         email: formData.email,
-        role: role,
-        token: "" 
+        role: role === "partner" ? "company" : "seeker",
+        token: "mock-token",
       });
 
       setTimeout(() => {
-        // English Comment: Clean navigation to dashboard without query strings
-        router.push("/dashboard");
+        // ✅ الاتنين بيروحوا /jobs بس كل واحد هيشوف حاجات مختلفة
+        router.push("/jobs");
       }, 1500);
     }, 2000);
   };
@@ -149,12 +119,8 @@ function SignUpContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 relative font-sans text-gray-900">
-      
-      {/* Back Button */}
-      <button 
-        onClick={() => router.push("/")}
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-all font-medium text-sm group"
-      >
+      <button onClick={() => router.push("/")}
+        className="absolute top-8 left-8 flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-all font-medium text-sm group">
         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-x-1 transition-transform">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
@@ -164,27 +130,17 @@ function SignUpContent() {
       <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-gray-100 transition-all">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-6 tracking-tight">Create Account</h2>
 
-        {/* ROLE SWITCHER WITH ICONS */}
+        {/* Role Switcher */}
         <div className="flex p-1 bg-gray-100 rounded-2xl mb-8">
-          <button
-            type="button"
-            onClick={() => setRole("seeker")}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
-              role === "seeker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
+          <button type="button" onClick={() => setRole("seeker")}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${role === "seeker" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             Seeker
           </button>
-          <button
-            type="button"
-            onClick={() => setRole("partner")}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${
-              role === "partner" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
+          <button type="button" onClick={() => setRole("partner")}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-xl text-xs font-bold transition-all ${role === "partner" ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
@@ -195,38 +151,21 @@ function SignUpContent() {
         <form onSubmit={handleSignup} className="space-y-4">
           {role === "seeker" ? (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
-              <input
-                placeholder="First Name"
+              <input placeholder="First Name"
                 className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.firstname && errors.firstname ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-                value={formData.firstname}
-                onChange={(e) => handleChange("firstname", e.target.value)}
-                onBlur={() => handleBlur("firstname")}
-              />
-              <input
-                placeholder="Last Name"
+                value={formData.firstname} onChange={(e) => handleChange("firstname", e.target.value)} onBlur={() => handleBlur("firstname")} />
+              <input placeholder="Last Name"
                 className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.lastname && errors.lastname ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-                value={formData.lastname}
-                onChange={(e) => handleChange("lastname", e.target.value)}
-                onBlur={() => handleBlur("lastname")}
-              />
+                value={formData.lastname} onChange={(e) => handleChange("lastname", e.target.value)} onBlur={() => handleBlur("lastname")} />
             </div>
           ) : (
             <div className="space-y-4 animate-in fade-in duration-300">
-              <input
-                placeholder="Company Name"
+              <input placeholder="Company Name"
                 className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.companyName && errors.companyName ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-                value={formData.companyName}
-                onChange={(e) => handleChange("companyName", e.target.value)}
-                onBlur={() => handleBlur("companyName")}
-              />
+                value={formData.companyName} onChange={(e) => handleChange("companyName", e.target.value)} onBlur={() => handleBlur("companyName")} />
               <select
-                className={`w-full px-4 py-2 border rounded-xl outline-none bg-white transition-all ${
-                  touched.industry && errors.industry ? "border-red-500" : "border-gray-200 focus:border-blue-500"
-                } ${formData.industry === "" ? "text-gray-400" : "text-gray-900"}`}
-                value={formData.industry}
-                onChange={(e) => handleChange("industry", e.target.value)}
-                onBlur={() => handleBlur("industry")}
-              >
+                className={`w-full px-4 py-2 border rounded-xl outline-none bg-white transition-all ${touched.industry && errors.industry ? "border-red-500" : "border-gray-200 focus:border-blue-500"} ${formData.industry === "" ? "text-gray-400" : "text-gray-900"}`}
+                value={formData.industry} onChange={(e) => handleChange("industry", e.target.value)} onBlur={() => handleBlur("industry")}>
                 <option value="" disabled hidden>Select Industry</option>
                 <option value="tech">Tech</option>
                 <option value="finance">Finance</option>
@@ -236,37 +175,24 @@ function SignUpContent() {
               </select>
               {formData.industry === "other" && (
                 <div className="animate-in slide-in-from-top-2 duration-300">
-                  <input
-                    placeholder="Please specify your industry"
+                  <input placeholder="Please specify your industry"
                     className="w-full px-4 py-2 border border-blue-200 rounded-xl outline-none bg-blue-50/30 focus:border-blue-500 transition-all text-sm"
-                    value={formData.customIndustry}
-                    onChange={(e) => handleChange("customIndustry", e.target.value)}
-                    onBlur={() => handleBlur("customIndustry")}
-                  />
+                    value={formData.customIndustry} onChange={(e) => handleChange("customIndustry", e.target.value)} onBlur={() => handleBlur("customIndustry")} />
                 </div>
               )}
             </div>
           )}
 
-          <input
-            type="email"
-            placeholder="Email Address"
+          <input type="email" placeholder="Email Address"
             className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.email && errors.email ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-            value={formData.email}
-            onChange={(e) => handleChange("email", e.target.value)}
-            onBlur={() => handleBlur("email")}
-          />
+            value={formData.email} onChange={(e) => handleChange("email", e.target.value)} onBlur={() => handleBlur("email")} />
 
           <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
+            <input type={showPassword ? "text" : "password"} placeholder="Password"
               className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.password && errors.password ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-              value={formData.password}
-              onChange={(e) => handleChange("password", e.target.value)}
-              onBlur={() => handleBlur("password")}
-            />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 hover:text-gray-600 transition-colors">
+              value={formData.password} onChange={(e) => handleChange("password", e.target.value)} onBlur={() => handleBlur("password")} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 hover:text-gray-600 transition-colors">
               {showPassword ? "HIDE" : "SHOW"}
             </button>
           </div>
@@ -282,26 +208,19 @@ function SignUpContent() {
             </div>
           )}
 
-          <input
-            type="password"
-            placeholder="Confirm Password"
+          <input type="password" placeholder="Confirm Password"
             className={`w-full px-4 py-2 border rounded-xl outline-none transition-all ${touched.confirmPassword && errors.confirmPassword ? "border-red-500" : "border-gray-200 focus:border-blue-500"}`}
-            value={formData.confirmPassword}
-            onChange={(e) => handleChange("confirmPassword", e.target.value)}
-            onBlur={() => handleBlur("confirmPassword")}
-          />
+            value={formData.confirmPassword} onChange={(e) => handleChange("confirmPassword", e.target.value)} onBlur={() => handleBlur("confirmPassword")} />
 
-          <button
-            type="submit"
-            disabled={!isValid || isSubmitting}
-            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all mt-4 ${isValid && !isSubmitting ? "bg-blue-600 text-white shadow-lg shadow-blue-100 active:scale-95 hover:bg-blue-700" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
-          >
+          <button type="submit" disabled={!isValid || isSubmitting}
+            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all mt-4 ${isValid && !isSubmitting ? "bg-blue-600 text-white shadow-lg shadow-blue-100 active:scale-95 hover:bg-blue-700" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
             {isSubmitting ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <p className="text-center mt-6 text-sm text-gray-500">
-          Already have an account? <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all underline-offset-4">Sign In</Link>
+          Already have an account?{" "}
+          <Link href="/login" className="text-blue-600 font-bold hover:underline transition-all underline-offset-4">Sign In</Link>
         </p>
       </div>
 
