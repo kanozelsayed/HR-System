@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
+import { useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -96,8 +97,6 @@ function SeekerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-900">
       <div className="max-w-5xl mx-auto space-y-6">
-
-        {/* Header */}
         <header className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">My Dashboard</h1>
@@ -110,7 +109,6 @@ function SeekerDashboard() {
           </div>
         </header>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Total Applied", value: MOCK_APPLICATIONS.length, color: "text-blue-600", bg: "bg-blue-50", dot: "bg-blue-400" },
@@ -128,7 +126,6 @@ function SeekerDashboard() {
           ))}
         </div>
 
-        {/* Profile + Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-4 mb-5">
@@ -169,7 +166,6 @@ function SeekerDashboard() {
           </div>
         </div>
 
-        {/* Applications Table */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-slate-800">My Applications</h3>
@@ -199,36 +195,6 @@ function SeekerDashboard() {
             </tbody>
           </table>
         </div>
-
-        {/* Recommended Jobs */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h3 className="font-bold text-slate-800">Recommended For You ✨</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Based on your profile and past applications</p>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {RECOMMENDED_JOBS.map((job) => (
-              <div key={job.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/60 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black text-sm">
-                    {job.company.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800 text-sm">{job.title}</p>
-                    <p className="text-xs text-slate-400">{job.company} · {job.location}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <MatchBar score={job.match} />
-                  <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap">
-                    Apply →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
     </div>
   );
@@ -248,8 +214,6 @@ function CompanyDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-900">
       <div className="max-w-5xl mx-auto space-y-6">
-
-        {/* Header */}
         <header className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">HR Dashboard</h1>
@@ -262,7 +226,6 @@ function CompanyDashboard() {
           </div>
         </header>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Active Jobs", value: MOCK_JOBS.length, color: "text-blue-600", dot: "bg-blue-400", bg: "bg-blue-50" },
@@ -280,10 +243,7 @@ function CompanyDashboard() {
           ))}
         </div>
 
-        {/* Hiring Funnel + Top Candidates */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          {/* Hiring Funnel */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h3 className="font-bold text-slate-800 mb-4 text-sm">Hiring Funnel</h3>
             <div className="space-y-3">
@@ -307,7 +267,6 @@ function CompanyDashboard() {
             </div>
           </div>
 
-          {/* Top Candidates */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h3 className="font-bold text-slate-800 mb-4 text-sm">🏆 Top Candidates</h3>
             <div className="space-y-3">
@@ -327,7 +286,6 @@ function CompanyDashboard() {
           </div>
         </div>
 
-        {/* Jobs Performance Table */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-slate-800">Jobs Performance</h3>
@@ -345,9 +303,7 @@ function CompanyDashboard() {
             <tbody className="divide-y divide-slate-50">
               {MOCK_JOBS.map((job) => (
                 <tr key={job.id} className="hover:bg-slate-50/60 transition-all">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-slate-800">{job.title}</p>
-                  </td>
+                  <td className="px-6 py-4"><p className="font-bold text-slate-800">{job.title}</p></td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-blue-600">{job.applicants}</span>
                     <span className="text-xs text-slate-400 ml-1">applicants</span>
@@ -355,29 +311,32 @@ function CompanyDashboard() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-emerald-600">{job.shortlisted}</span>
-                      <span className="text-xs text-slate-400">
-                        ({Math.round((job.shortlisted / job.applicants) * 100)}%)
-                      </span>
+                      <span className="text-xs text-slate-400">({Math.round((job.shortlisted / job.applicants) * 100)}%)</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <MatchBar score={job.avgMatch} />
-                  </td>
+                  <td className="px-6 py-4"><MatchBar score={job.avgMatch} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   );
 }
 
-// ─── Smart Router ─────────────────────────────────────────────────────────────
+// ─── Smart Router & Protection ────────────────────────────────────────────────
 
 function DashboardContent() {
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // 🛡️ حماية المسار: لو المستخدم مش مسجل يرجعه للـ Login
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -385,11 +344,19 @@ function DashboardContent() {
     </div>
   );
 
+  if (!user) return null;
+
   // ✅ Seeker Dashboard
   if (user?.role === "seeker") return <SeekerDashboard />;
 
-  // ✅ Company Dashboard
-  return <CompanyDashboard />;
+  // ✅ Company Dashboard (كلمة employer اللي جاية من الباكيند)
+  if (user?.role === "employer") return <CompanyDashboard />;
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <p className="text-red-500 font-bold">Unauthorized Access</p>
+    </div>
+  );
 }
 
 export default function Dashboard() {

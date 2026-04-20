@@ -8,36 +8,38 @@ import { useAuth } from "@/app/context/AuthContext";
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user } = useAuth(); // ✅ سحبنا بيانات المستخدم واللوج أوت مرة واحدة
 
-  // ✅ على موبايل تبدأ مقفولة، على desktop تبدأ مفتوحة
+  // ✅ المنيو كاملة مع تعديل Roles لـ employer
+  const allMenuItems = [
+    { name: "Job Feed", icon: "💼", href: "/jobs", roles: ["employer", "seeker"] },
+    { name: "Candidates", icon: "👥", href: "/candidates", roles: ["employer"] },
+    { name: "Your Activity", icon: "📊", href: "/dashboard", roles: ["employer"] },
+    { name: "My Applications", icon: "📝", href: "/dashboard", roles: ["seeker"] },
+    { name: "Messages", icon: "💬", href: "#", roles: ["employer", "seeker"] },
+    { name: "Settings", icon: "⚙️", href: "#", roles: ["employer", "seeker"] },
+  ];
+
+  // ✅ فلترة العناصر بناءً على الـ role اللي جاي من الباكيند (employer)
+  const menuItems = allMenuItems.filter(
+    (item) => user && item.roles.includes(user.role)
+  );
+
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // التحكم في حجم السايد بار بناءً على الشاشة
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
-        setIsCollapsed(true); // ✅ موبايل = مقفولة
+        setIsCollapsed(true);
       } else {
-        setIsCollapsed(false); // ✅ desktop = مفتوحة
+        setIsCollapsed(false);
       }
     };
-    handleResize(); // شغلها أول مرة
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const allMenuItems = [
-    { name: "Job Feed", icon: "💼", href: "/jobs", roles: ["company", "seeker"] },
-    { name: "Candidates", icon: "👥", href: "/candidates", roles: ["company"] },
-    { name: "Your Activity", icon: "📊", href: "/dashboard", roles: ["company"] },
-    { name: "My Applications", icon: "📝", href: "/dashboard", roles: ["seeker"] },
-    { name: "Messages", icon: "💬", href: "#", roles: ["company", "seeker"] },
-    { name: "Settings", icon: "⚙️", href: "#", roles: ["company", "seeker"] },
-  ];
-
-  const menuItems = allMenuItems.filter(
-    (item) => !user || item.roles.includes(user.role)
-  );
 
   const handleLogout = () => {
     logout();
@@ -66,7 +68,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav Links */}
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-hidden">
+      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item) => (
           <Link
             key={item.name}

@@ -61,10 +61,10 @@ function LoginContent() {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
-    // ✅ Using the environment variable URL
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
     try {
+      // نداء الـ API الخاص بالباكيند اللي عدلناه
       const response = await axios.post(`${apiUrl}/company/login`, {
         email: cleanEmail,
         password: cleanPassword,
@@ -72,17 +72,17 @@ function LoginContent() {
 
       const { access_token, user } = response.data;
 
-      // ✅ Saving standard data to AuthContext
+      // ✅ التعديل هنا: نأخذ الـ role من الباكيند (سيكون employer)
       login({
         name: user.name,
         email: user.email,
-        role: "company",
+        role: user.role, // استبدلنا "company" بـ user.role اللي جاي من الـ API
         token: access_token,
       });
 
       showToast("Login successful! Redirecting...", "success");
       
-      // Navigate to Jobs Feed
+      // التوجيه للـ Dashboard أو Feed الوظائف
       setTimeout(() => router.push("/jobs"), 1000);
 
     } catch (error: any) {

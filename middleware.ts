@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 // ✅ الصفحات دي محتاجة login بس
 const PROTECTED = ["/jobs", "/dashboard", "/candidates"];
 
-// ✅ الصفحات دي للـ company بس
+// ✅ الصفحات دي للـ employer (الشركة) بس
 const COMPANY_ONLY = ["/candidates"];
 
 export function middleware(request: NextRequest) {
@@ -16,11 +16,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // ✅ بس /candidates للـ company بس - مش /dashboard
+  // ✅ التحقق من صلاحيات صفحة الـ Candidates
   if (COMPANY_ONLY.some((p) => pathname.startsWith(p)) && userCookie) {
     try {
       const parsed = JSON.parse(decodeURIComponent(userCookie));
-      if (parsed.role !== "company") {
+      
+      // 🚨 التعديل الجوهري هنا: بنقارن بـ employer مش company
+      if (parsed.role !== "employer") { 
         return NextResponse.redirect(new URL("/jobs", request.url));
       }
     } catch {

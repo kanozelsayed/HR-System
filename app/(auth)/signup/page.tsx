@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
+import axios from "axios"; // ✅ ضفنا axios
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -89,30 +90,35 @@ function SignUpContent() {
     validateField(name, (formData as any)[name]);
   };
 
+  // ✅ تعديل الـ handleSignup ليتصل بالباكيند الحقيقي
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+    try {
+      if (role === "partner") {
+        // نداء API تسجيل الشركات (Employer)
+        await axios.post(`${apiUrl}/company/register`, {
+          name: formData.companyName,
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        });
+
+        showToast("Company account created successfully!", "success");
+        setTimeout(() => router.push("/login"), 1500);
+      } else {
+        // هنا المفروض يكون في API للـ Seeker بس بما إن الباكيند الحالي فيه Company بس:
+        showToast("Seeker registration coming soon! Try Partner for now.", "error");
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.detail || "Registration failed. Try again.";
+      showToast(errorMsg, "error");
+    } finally {
       setIsSubmitting(false);
-      showToast("Account created successfully!", "success");
-
-      const userName = role === "partner" ? formData.companyName : formData.firstname;
-
-      // ✅ partner = company, seeker = seeker
-      login({
-        name: userName,
-        email: formData.email,
-        role: role === "partner" ? "company" : "seeker",
-        token: "mock-token",
-      });
-
-      setTimeout(() => {
-        // ✅ الاتنين بيروحوا /jobs بس كل واحد هيشوف حاجات مختلفة
-        router.push("/jobs");
-      }, 1500);
-    }, 2000);
+    }
   };
 
   const score = getStrengthScore(formData.password);
